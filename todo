@@ -1,0 +1,7 @@
+- position elements
+- make circles size dependant on screen size
+- make sure brightness of circles is sufficient (sum of colors must not be lower than XXX)
+- experiment with expanding animation
+- text should fade in after (during?) expansion
+- back button? (a black pulsing circle inwards?)
+- mobile friendliness

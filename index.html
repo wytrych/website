@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Marcin Wolniewicz</title>
+		<link href="https://fonts.googleapis.com/css?family=Heebo:100" rel="stylesheet">
+		<style>
+canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: #111122;
+	overflow: hidden;
+	color: #bdbdbd;
+	font-family: 'Heebo', sans-serif;
+	font-size: 23px;
+	height: 100%;
+}
+
+html {
+	height: 100%;
+}
+
+section {
+	position: absolute;
+}
+
+section p {
+	display: none;
+}
+
+section:target p {
+	display: initial;
+}
+
+address {
+	font-style: normal;
+	position: absolute;
+	font-size: 100px;
+	bottom: 0px;
+	line-height: 93px;
+	transition: opacity ease-out 3s;
+}
+
+address.dimmed {
+	opacity: 0.1;
+}
+
+address:hover {
+	opacity: 1;
+}
+		</style>
+	</head>
+
+	<body>
+
+
+	<canvas id="background-1"></canvas>
+	<canvas id="background-2"></canvas>
+
+	<main>
+
+		<section id="education">
+            <!--<h2><a href="#education">Education</a></h2>-->
+			<h2>Education</h2>
+			<p>
+2003–2006 A-Levels (Gymnasieskola Certifikat) in Mathematics and Physics - grade A+ IVth High School, Toruñ
+2006–2008 Physics and Computer Science Nicolas Copernicus University, Toruñ
+2008–2013 Master of Arts in Sound Engineering Frederic Chopin University of Music, Warsaw
+Thesis: The influence of loudness level of background music on shopping behaviour
+— a field study
+			</p>
+		</section>
+
+		<section id="experience">
+            <!--<h2><a href="#experience">Experience</a></h2>-->
+			<h2>Experience</h2>
+			<p>
+Incuna:
+
+* Making issues
+* Pointing issues
+* Sprint planning
+* CI / deployment / build tools
+* JS development (AngularJS, React, d3, moment.js, lodash, babel)
+* MVC
+* Django / Python occasionally
+* SASS occasionally
+* code review for Obj-C ?
+* Writing tech specs
+* Consulting projects and ideas with designers, uxers, PMs, external companies
+* TDD
+* Clean code
+
+
+2004-2006 Webmaster - IVth High School Toruñ:
+
+* Team of 4 - after school voluntary work
+* PHP / MySql
+* A custom built student / teacher student portal with about 500 users
+* A tagged photogallery with user uploading and editing
+* Schedule changes system used by the school director
+
+* Flash
+
+2015-now
+
+* d3 data viz
+* Instytucje (en)
+* Water
+			</p>
+		</section>
+
+		<section id="projects">
+			<h2>Projects</h2>
+		</section>
+
+		<section id="music">
+			<h2>Music</h2>
+		</section>
+
+	</main>
+
+	<address>Marcin Wolniewicz</address>
+
+	<script src="script.js"></script>
+
+	</body>
+</html>
