@@ -1,0 +1,23 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "description": "Personal website",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wytrych/website.git"
+  },
+  "author": "Marcin Wolniewicz",
+  "license": "UNLICENCED",
+  "bugs": {
+    "url": "https://github.com/wytrych/website/issues"
+  },
+  "homepage": "https://github.com/wytrych/website#readme",
+  "devDependencies": {
+    "tap-spec": "4.1.1",
+    "tape": "4.6.3"
+  }
+}

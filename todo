@@ -5,3 +5,5 @@
 - text should fade in after (during?) expansion
 - back button? (a black pulsing circle inwards?)
 - mobile friendliness
+- more random cycle times on circles
+- base everything on time, not on framerates
