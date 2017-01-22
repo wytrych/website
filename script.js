@@ -177,7 +177,10 @@ class CanvasBuffer {
 
 let waves = []
 
+let takenLabelLanes = []
+
 createWavesSet(4)
+console.log(takenLabelLanes);
 
 function createWavesSet (numberOfWaves) {
 	const labels = [
@@ -198,10 +201,20 @@ function createRandomWave (x, y, label) {
 		blue: randomColor(),
 		alphaStep: (Math.random() * 0.5 + 0.5) / 200,
 		duration: 500,
-		x: x || Math.round(Math.random() * WIDTH),
-		y: y || Math.round(Math.random() * HEIGHT),
-		label
+		x: x || getRandomPosition(WIDTH * 0.2),
+		y: y || getRandomPosition(HEIGHT * 0.2),
+		label,
 	})
+}
+
+function getRandomPosition (multiplier = 1) {
+    const newChoice = Math.round(Math.random()) + 1
+    const previousLaneNumber = takenLabelLanes[takenLabelLanes.length - 1] || 0
+    const newLaneNumber = previousLaneNumber + newChoice
+    console.log(newChoice, previousLaneNumber, newLaneNumber);
+    takenLabelLanes.push(newLaneNumber)
+
+    return  Math.round(Math.random() * multiplier)
 }
 
 function randomColor () {
