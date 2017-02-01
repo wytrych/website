@@ -1,129 +1,57 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Marcin Wolniewicz</title>
+		<title>Marcin Wolniewicz for Spotify</title>
         <link href="https://fonts.googleapis.com/css?family=Raleway:200,300" rel="stylesheet">
+        <link href="style.css" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="theme-color" content="#000000" />
-		<style>
-
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-	margin: 0;
-	padding: 0;
-}
-
-body {
-	background: black;
-	color: #bdbdbd;
-	font-family: 'Raleway', sans-serif;
-	font-size: 23px;
-    padding: 0;
-    margin: 0;
-}
-
-section {
-	position: absolute;
-}
-
-section p {
-	display: none;
-}
-
-section:target p {
-	display: initial;
-}
-
-address {
-	font-style: normal;
-	position: absolute;
-	font-size: 100px;
-	bottom: 0px;
-	line-height: 93px;
-	transition: opacity ease-out 3s;
-}
-
-address.dimmed {
-	opacity: 0.1;
-}
-
-address:hover {
-	opacity: 1;
-}
-
-main {
-    margin-top: 10vh;
-    text-align: center;
-    padding: 10px;
-    font-weight: 200;
-    position: relative;
-    z-index: 1;
-}
-
-body.hide-main-text main,
-body.hide-main-text address {
-    pointer-events: none;
-	transition: opacity linear 0.7s;
-    opacity: 0;
-    user-select: none;
-}
-
-#empty-state-text {
-    opacity: 0;
-	transition: opacity linear 1.5s;
-    position: relative;
-    z-index: 2;
-    pointer-events: none;
-}
-
-body.hide-main-text #empty-state-text {
-    opacity: 1;
-}
-
-body #empty-state-text.hide {
-    opacity: 0;
-    user-select: none;
-}
-
-p {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto;
-    font-weight: 300;
-}
-
-		</style>
+        <meta name="msapplication-navbutton-color" content="#000000">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	</head>
 
 	<body>
 
 	<main>
+        <h1>Hi Spotify!</h1>
 
-    <h1>Hi Spotify!</h1>
+        <h2>I'm Marcin and I would love to work with you!</h2>
 
-    <h2>I would love to work with you!</h2>
+        <h3>Why?</h3>
 
-    <h3> Why?</h3>
+        <p>I believe that you are the future of the music industry and I would like to be part of that feature.</p>
 
-    <p>I believe that you are the future of the music industry and I would like to be part of that feature. You also have amazing developers that would allow me to reach the next level.</p>
+        <h3>Why me?</h3>
 
-    <h3> Why me? </h3>
+        <p>I love coding and being challenged. And apart from that, I am a musician and a sound engineer, so I know things about DSP, waves theory, acoustics and psychoacoustics.</p>
 
-    <p>I learn really fast and I love being challenged. When I care for something I can work fast and give all the best I have. And apart from that, I am a musician and a sound engineer, so I know things about DSP, waves theory, acoustics, psychoacoustics. Math is also something I've always enjoyed and know some advanced math topics, like logarithms and calculus. I also feel strong about solving computer science problems with graphs and dynamic programming. And I am assionate about TDD and Clean Code.</p>
+        <h3>Links?</h3>
+        
+        <section class="links">
+            <h4>Social</h4>
+            <a href="http://www.github.com/wytrych">GitHub</a><br>
+            <a href="http://www.linkedin.com/in/marcin-wolniewicz">LinkedIn</a><br>
 
-    <h3>What's with the background?</h3>
+            <h4>Code</h4>
+            <a href="http://www.github.com/wytrych/spotify-puzzles">My attempts at puzzles</a><br>
+            <a href="http://pliki.nck.pl/badan/instytucje_v11.svg">An interactive infographic showing<br>government spending on culture (Polish only)</a>
 
-    <p>The background is interactive! You can click on it to generate more pulsing circles. You can also go to a <a id="show-background-link" href="">textless version</a> with sound</p>
+            <h4>Music</h4>
+            <a href="https://www.youtube.com/watch?v=DLfsOHOimPk">Videoturisten - Wait</a><br>
+            <a href="https://www.youtube.com/watch?v=BYIKs6EGZNE">How you doing?</a><br>
+            <a href="https://www.youtube.com/watch?v=JsgOQCSfrHk">Sounds of speech</a><br>
+
+        </section>
+
+        <h3>That's a funny background</h3>
+
+        <p>Actually, it's interactive! <a id="show-background-link" href="">Click here</a> to play!</p>
 	</main>
 
-    <p id="empty-state-text">Turn up your speakers and click or tap on the background to create a sound wave.</p>
+    <p id="empty-state-text">Turn up your speakers and click or tap on the background to create a sound wave. Position has meaning!</p>
 
     <canvas id="background"></canvas>
-
-    <!--<address>Marcin Wolniewicz</address>-->
 
 	<script src="script.js"></script>
 

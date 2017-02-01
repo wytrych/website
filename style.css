@@ -1,0 +1,72 @@
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: black;
+	color: #bdbdbd;
+	font-family: 'Raleway', sans-serif;
+	font-size: 23px;
+    padding: 0 25px 0 25px;
+    margin: 0;
+}
+
+main {
+    margin-top: 10vh;
+    text-align: center;
+    padding: 10px;
+    font-weight: 200;
+    position: relative;
+    z-index: 1;
+}
+
+body.hide-main-text main {
+    pointer-events: none;
+	transition: opacity linear 0.7s;
+    opacity: 0;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#empty-state-text {
+    opacity: 0;
+	transition: opacity linear 1.5s;
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+    margin-bottom: 15px;
+}
+
+body.hide-main-text #empty-state-text {
+    opacity: 1;
+}
+
+body #empty-state-text.hide {
+    opacity: 0;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+p {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    font-weight: 300;
+}
+
+a {
+    color: #e18009;
+}
+
+.links h4 {
+    margin-bottom: 0;
+}

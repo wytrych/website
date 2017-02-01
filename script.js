@@ -1,24 +1,3 @@
-const GLOBALS = {
-    offset: 0,
-    height: 0,
-    width: 0,
-    canvas: document.getElementById('background'),
-    audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
-    waves: [],
-}
-
-GLOBALS.ctx = GLOBALS.canvas.getContext('2d')
-
-GLOBALS.masterGain = GLOBALS.audioCtx.createGain()
-GLOBALS.masterGain.gain.value = 80
-GLOBALS.masterGain.connect(GLOBALS.audioCtx.destination)
-
-GLOBALS.filter = GLOBALS.audioCtx.createBiquadFilter()
-GLOBALS.filter.type = 'highshelf'
-GLOBALS.filter.frequency.value = 7000
-GLOBALS.filter.gain.value = -50
-GLOBALS.filter.connect(GLOBALS.masterGain)
-
 class Wave {
 	constructor (waveSettings) {
         this.GAP_MULTIPLIER = 40
@@ -225,7 +204,7 @@ class WaveGenerator {
                 green: this.randomColor(),
                 blue: this.randomColor(),
             }
-        } while (color.red + color.green + color.blue < 120)
+        } while (color.red + color.green + color.blue < 160)
 
         return color
     }
@@ -298,14 +277,6 @@ class Page {
         )
     }
 
-    static setupNameDim () {
-        const addressEl = document.getElementsByTagName('address')[0]
-        const DIM_DELAY = 10000
-        setTimeout(() => {
-            addressEl.classList.add('dimmed');
-        }, DIM_DELAY)
-    }
-
     static setupBackgroundLinkListener () {
         const backgroundLink = document.getElementById('show-background-link')
         backgroundLink.addEventListener('click', (e) => {
@@ -341,11 +312,35 @@ class Page {
     }
 }
 
-Page.setupNameDim()
-Page.setupBackgroundLinkListener()
-Page.setupDimensionsAndCanvas()
+var GLOBALS = {}
 
-WaveGenerator.createSpotifyWavesSet()
+window.onload = function () {
+    GLOBALS = {
+        offset: 0,
+        height: 0,
+        width: 0,
+        canvas: document.getElementById('background'),
+        audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
+        waves: [],
+    }
 
-const runner = new AnimationRunner(GLOBALS)
-runner.startAnimation()
+    GLOBALS.ctx = GLOBALS.canvas.getContext('2d')
+
+    GLOBALS.masterGain = GLOBALS.audioCtx.createGain()
+    GLOBALS.masterGain.gain.value = 80
+    GLOBALS.masterGain.connect(GLOBALS.audioCtx.destination)
+
+    GLOBALS.filter = GLOBALS.audioCtx.createBiquadFilter()
+    GLOBALS.filter.type = 'highshelf'
+    GLOBALS.filter.frequency.value = 7000
+    GLOBALS.filter.gain.value = -50
+    GLOBALS.filter.connect(GLOBALS.masterGain)
+
+    Page.setupBackgroundLinkListener()
+    Page.setupDimensionsAndCanvas()
+
+    WaveGenerator.createSpotifyWavesSet()
+
+    const runner = new AnimationRunner(GLOBALS)
+    runner.startAnimation()
+}
