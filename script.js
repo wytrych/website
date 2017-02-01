@@ -97,6 +97,7 @@ class WaveComponent {
         this.DEFUNCT_LIMIT = 0.0001
 
         this.RADIUS_MODIFIER = 1 / 300
+        this.GLOW_PERIOD = 50
 	}
 
 	spreadStep () {
@@ -107,7 +108,9 @@ class WaveComponent {
 	increment () {
 		this.alpha -= this.alphaStep
 		this.radius += this.speed
+
 		this.frameCount += 1
+        this.frameCount %= this.GLOW_PERIOD
 
 		if (this.alpha < this.DEFUNCT_LIMIT)
 			this.defunct = true
@@ -128,10 +131,8 @@ class WaveComponent {
 		GLOBALS.ctx.closePath()
 	}
 
-	waveFunction (x) {
-		const period = 50
-		const position = x % period
-		const howFarInPeriod = (position / period)
+	waveFunction (position) {
+		const howFarInPeriod = (position / this.GLOW_PERIOD)
 		const modifier = 8
 
 		return (Math.sin(2 * Math.PI * howFarInPeriod) + 1) / modifier
