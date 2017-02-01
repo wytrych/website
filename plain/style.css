@@ -25,10 +25,6 @@ main {
     z-index: 1;
 }
 
-body.hide-main-text {
-    cursor: pointer;
-}
-
 body.hide-main-text main {
     pointer-events: none;
 	transition: opacity linear 0.7s;

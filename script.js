@@ -123,16 +123,15 @@ class AudioSignal {
     constructor ({x, y}) {
         this.MIN_FREQ = 20
         this.MAX_FREQ = 15000
-        this.GAIN_MODIFIER = 0.0005
+        this.GAIN_MODIFIER = -0.0005
         const maxMultiplier = Math.log2(this.MAX_FREQ / this.MIN_FREQ)
 
         const position = (window.innerHeight - y) / window.innerHeight
 
         const pan = 2 * ((GLOBALS.width - x) / GLOBALS.width) - 1
-        this.panner = GLOBALS.audioCtx.createStereoPanner()
-        this.panner.pan.value = -pan
 
         this.gainNode = GLOBALS.audioCtx.createGain()
+        this.gainNode.gain.value = 0
 
         this.oscillator = GLOBALS.audioCtx.createOscillator()
         this.oscillator.type = 'sine'
@@ -140,10 +139,14 @@ class AudioSignal {
         this.oscillator.frequency.value = this.freq
         this.oscillator.connect(this.gainNode)
 
-        this.gainNode.connect(this.panner)
-        this.gainNode.gain.value = 0
+        if (GLOBALS.audioCtx.createStereoPanner) {
+            this.panner = GLOBALS.audioCtx.createStereoPanner()
+            this.panner.pan.value = -pan
+            this.gainNode.connect(this.panner)
 
-        this.panner.connect(GLOBALS.filter)
+            this.panner.connect(GLOBALS.filter)
+        } else
+            this.gainNode.connect(GLOBALS.filter)
 
         this.oscillator.start()
     }
