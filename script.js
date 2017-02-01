@@ -1,54 +1,83 @@
-const buffers = [
-	document.getElementById('background-1'),
-	document.getElementById('background-2'),
-]
+const GLOBALS = {
+    offset: 0,
+    height: 0,
+    width: 0,
+    canvas: document.getElementById('background'),
+    audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
+    waves: [],
+}
 
-const HEIGHT = window.outerHeight
-const WIDTH = window.outerWidth
+GLOBALS.ctx = GLOBALS.canvas.getContext('2d')
 
-const canvases = Array.from(document.getElementsByTagName('canvas'))
-canvases.forEach((canvas) => {
-	canvas.width = WIDTH
-	canvas.height = HEIGHT
-})
+GLOBALS.masterGain = GLOBALS.audioCtx.createGain()
+GLOBALS.masterGain.gain.value = 80
+GLOBALS.masterGain.connect(GLOBALS.audioCtx.destination)
 
-let selectedItemBackground
+GLOBALS.filter = GLOBALS.audioCtx.createBiquadFilter()
+GLOBALS.filter.type = 'highshelf'
+GLOBALS.filter.frequency.value = 7000
+GLOBALS.filter.gain.value = -50
+GLOBALS.filter.connect(GLOBALS.masterGain)
 
 class Wave {
 	constructor (waveSettings) {
+        this.GAP_MULTIPLIER = 40
+
 		this.numOfWaves = 8
 		this.waves = []
 
-		this.label = new Label(waveSettings)
 		this.waveSettings = waveSettings
+
+        if (!waveSettings.isSilent)
+            this.signal = new AudioSignal(waveSettings)
+
+        this.phaseOut = false
+        this.defunct = false
 
 		for (let i = 0; i < this.numOfWaves; i++)
 			this.createWave(i)
 	}
 
 	createWave (i) {
-		const gap = Math.round((i / this.numOfWaves) * this.waveSettings.duration)
+        // Gap is unsynced with framerate on purpose to add a bit of a random shift
+		const gap = Math.round((i / this.numOfWaves) * this.waveSettings.duration) * this.GAP_MULTIPLIER
 		setTimeout(() => {
-			this.waves[i] = new WaveGenerator(this.waveSettings)
-		}, gap * 40)
+            if (!this.phaseOut)
+                this.waves[i] = new WaveComponent(this.waveSettings)
+		}, gap)
 	}
 
 	spreadStep () {
+        let summaricAlpha = 0
 		this.waves.forEach((wave, i) => {
 			wave.spreadStep()
+            summaricAlpha += wave.currentAlpha
 			if (wave.defunct)
-				this.waves[i] = new WaveGenerator(this.waveSettings)
+                this.replaceOrClearWave(i)
 		})
+
+        const newGain = summaricAlpha
+        if (this.signal)
+            this.signal.changeGain(newGain)
+
+        this.waves = this.waves.filter((el) => el !== null)
+        if (this.phaseOut && this.waves.length === 0)
+            this.defunct = true
 	}
+
+    replaceOrClearWave (i) {
+        if (this.phaseOut)
+            this.waves[i] = null
+        else
+            this.waves[i] = new WaveComponent(this.waveSettings)
+    }
 }
 
-class WaveGenerator {
+class WaveComponent {
 
 	constructor ({speed, alphaStep, red, green, blue, duration, x, y}) {
 		this.speed = speed
-		this.throttle = 1
 
-		this.flipSwitch = false
 		this.red = red
 		this.green = green
 		this.blue = blue
@@ -62,9 +91,12 @@ class WaveGenerator {
 
 		this.x = x
 		this.y = y
-
+        this.offset = GLOBALS.offset
 
 		this.defunct = false
+        this.DEFUNCT_LIMIT = 0.0001
+
+        this.RADIUS_MODIFIER = 1 / 300
 	}
 
 	spreadStep () {
@@ -77,25 +109,23 @@ class WaveGenerator {
 		this.radius += this.speed
 		this.frameCount += 1
 
-		if (this.alpha < 0.0001)
+		if (this.alpha < this.DEFUNCT_LIMIT)
 			this.defunct = true
 	}
 
 	paint () {
-		const canvas = buffers[0]
-		const ctx = canvas.getContext('2d')
-		//ctx.globalCompositeOperation = 'xor'
-
-		ctx.beginPath()
-		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+		GLOBALS.ctx.beginPath()
+		GLOBALS.ctx.arc(this.x, this.y + this.offset, this.radius, 0, 2 * Math.PI)
 
 		const R = this.red
 		const G = this.green
 		const B = this.blue
 		const A = this.alpha * this.waveFunction(this.frameCount)
-		ctx.fillStyle =  `rgba(${R}, ${G}, ${B}, ${A})`
-		ctx.fill()
-		ctx.closePath()
+
+        this.currentAlpha = A * this.radius * this.RADIUS_MODIFIER
+		GLOBALS.ctx.fillStyle =  `rgba(${R}, ${G}, ${B}, ${A})`
+		GLOBALS.ctx.fill()
+		GLOBALS.ctx.closePath()
 	}
 
 	waveFunction (x) {
@@ -109,155 +139,212 @@ class WaveGenerator {
 
 }
 
-class BackgroundWave extends WaveGenerator {
-	spreadStep () {
-		if (this.speed < 0 || this.radius < Math.max(window.innerWidth, window.innerHeight)) {
-			console.log('pain');
-			this.increment()
-		}
+class AudioSignal {
+    constructor ({x, y}) {
+        this.MIN_FREQ = 20
+        this.MAX_FREQ = 15000
+        this.GAIN_MODIFIER = 0.0005
+        const maxMultiplier = Math.log2(this.MAX_FREQ / this.MIN_FREQ)
 
-		if (this.radius > 0)
-			this.paint()
-		else
-			this.defunct = true
-	}
+        const position = (window.innerHeight - y) / window.innerHeight
 
-	waveFunction () {
-		return 1
-	}
+        const pan = 2 * ((GLOBALS.width - x) / GLOBALS.width) - 1
+        this.panner = GLOBALS.audioCtx.createStereoPanner()
+        this.panner.pan.value = -pan
 
-	windBack () {
-		this.speed = -this.speed
-	}
-}
+        this.gainNode = GLOBALS.audioCtx.createGain()
 
-class Label {
-	constructor (waveSettings) {
-		this.waveSettings = waveSettings
+        this.oscillator = GLOBALS.audioCtx.createOscillator()
+        this.oscillator.type = 'sine'
+        this.freq = this.MIN_FREQ * Math.pow(2, position * maxMultiplier)
+        this.oscillator.frequency.value = this.freq
+        this.oscillator.connect(this.gainNode)
 
-		if (waveSettings.label) {
-			this.attachListener()
-			this.moveLabel()
-		}
-	}
+        this.gainNode.connect(this.panner)
+        this.gainNode.gain.value = 0
 
-	attachListener () {
-		const sectionId = this.waveSettings.label.toLowerCase()
-		const section = document.getElementById(sectionId)
-		section.addEventListener('click', () => {
-			if (selectedItemBackground)
-				selectedItemBackground.windBack()
-			else
-				selectedItemBackground = new BackgroundWave(Object.assign({}, this.waveSettings, {
-					speed: 50,
-					alphaStep: -0.0001,
-					alpha: 0,
-				}))
-		})
-	}
+        this.panner.connect(GLOBALS.filter)
 
-	moveLabel () {
-		const sectionId = this.waveSettings.label.toLowerCase()
-		const section = document.getElementById(sectionId)
-		const x = this.waveSettings.x
-		const y = this.waveSettings.y
-		section.style.left = `${x}px`
-		section.style.top = `${y}px`
-	}
+        this.oscillator.start()
+    }
+
+    changeGain (newValue) {
+        this.gainNode.gain.value = this.GAIN_MODIFIER * newValue
+    }
 
 }
 
-class CanvasBuffer {
-		//canvas.style.visibility = 'hidden'
-		//shownCanvas.style.visibility = 'visible'
-		//const shownBufferNo = !this.flipSwitch / 1
-		//const drawingBufferNo = this.flipSwitch / 1
-		//const canvas = buffers[drawingBufferNo]
+class WaveGenerator {
+
+    static createSpotifyWavesSet () {
+        const spotifyColor = {red: 30, green: 215, blue: 96}
+        GLOBALS.waves.push(this.createRandomWave({
+            x: GLOBALS.width,
+            y: GLOBALS.height / 3,
+            color: spotifyColor,
+            speed: 1,
+            alphaStep: 1/300,
+            isSilent: true,
+        }))
+
+        GLOBALS.waves.push(this.createRandomWave({
+            x: 30,
+            y: GLOBALS.height - 40,
+            color: spotifyColor,
+            speed: 1.2,
+            alphaStep: 1/400,
+            isSilent: true,
+        }))
+    }
+
+    static createRandomWave ({x, y, color, speed, alphaStep, isSilent}) {
+        const finalColor = color || this.generateRandomColor()
+
+        const waveSettings = Object.assign({}, {
+            speed: this.isDef(speed) ? speed : (Math.random() * 0.8 + 0.2),
+            alphaStep: this.isDef(alphaStep) ? alphaStep : (Math.random() * 0.5 + 0.5) / 200,
+            duration: 400 + Math.random() * 150,
+            x: this.isDef(x) ? x : Math.round(Math.random() * GLOBALS.width),
+            y: this.isDef(y) ? y : Math.round(Math.random() * GLOBALS.height),
+            isSilent,
+        }, finalColor)
+
+        return new Wave(waveSettings)
+    }
+
+    static isDef (value) {
+        return typeof value !== 'undefined'
+    }
+
+    static generateRandomColor () {
+        let color
+        do {
+            color = {
+                red: this.randomColor(),
+                green: this.randomColor(),
+                blue: this.randomColor(),
+            }
+        } while (color.red + color.green + color.blue < 120)
+
+        return color
+    }
+
+    static randomColor () {
+        const min = 10
+        return Math.round(min + Math.random() * (127 - min))
+    }
+
 }
 
-let waves = []
+class AnimationRunner {
+    constructor (GLOBALS) {
+        this.lastFrameTime = Date.now()
+        this.GLOBALS = GLOBALS
 
-createWavesSet(4)
+        const framerate = 25
+        this.msPerFrame = 1000 / framerate
+    }
 
-function createWavesSet (numberOfWaves) {
-	const labels = [
-		'Education',
-		'Projects',
-		'Experience',
-		'Music',
-	];
-	for (let i = 0; i < numberOfWaves; i++)
-		waves[i] = createRandomWave(null, null, labels[i % 4])
+    startAnimation () {
+        this.processFrame()
+    }
+
+    processFrame () {
+        const currentTime = Date.now()
+
+        if (currentTime - this.lastFrameTime > this.msPerFrame) {
+            window.requestAnimationFrame(this.drawFrame.bind(this))
+            this.lastFrameTime = currentTime
+        } else
+            window.requestAnimationFrame(this.processFrame.bind(this))
+    }
+
+    drawFrame () {
+        const alphaFactor = 0.7
+        this.GLOBALS.ctx.fillStyle = `rgba(0, 0, 0, ${alphaFactor})`
+        this.GLOBALS.ctx.fillRect(0, 0,  this.GLOBALS.width, this.GLOBALS.height)
+        this.GLOBALS.waves.forEach((wave) => {
+            wave.spreadStep()
+        })
+
+        this.GLOBALS.waves = this.GLOBALS.waves.filter((wave) => !wave.defunct)
+
+        window.requestAnimationFrame(this.processFrame.bind(this))
+    }
+
 }
 
-function createRandomWave (x, y, label) {
-	return new Wave({
-		speed: (Math.random() * 0.8 + 0.2),
-		red: randomColor(),
-		green: randomColor(),
-		blue: randomColor(),
-		alphaStep: (Math.random() * 0.5 + 0.5) / 200,
-		duration: 500,
-		x: x || Math.round(Math.random() * WIDTH),
-		y: y || Math.round(Math.random() * HEIGHT),
-		label
-	})
+class Page {
+
+    static setupDimensionsAndCanvas () {
+        GLOBALS.height = this.getHeight()
+        GLOBALS.width = document.body.clientWidth
+
+        GLOBALS.canvas.width = GLOBALS.width
+        GLOBALS.canvas.height = GLOBALS.height
+    }
+
+    static getHeight () {
+        const body = document.body
+        const html = document.documentElement
+
+        return Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.clientHeight,
+            html.scrollHeight,
+            html.offsetHeight
+        )
+    }
+
+    static setupNameDim () {
+        const addressEl = document.getElementsByTagName('address')[0]
+        const DIM_DELAY = 10000
+        setTimeout(() => {
+            addressEl.classList.add('dimmed');
+        }, DIM_DELAY)
+    }
+
+    static setupBackgroundLinkListener () {
+        const backgroundLink = document.getElementById('show-background-link')
+        backgroundLink.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            document.body.classList.add('hide-main-text')
+            this.fadeOutBackgroundWaves()
+            this.addCanvasListener()
+            window.addEventListener('resize', this.setupDimensionsAndCanvas.bind(this))
+            GLOBALS.offset = window.pageYOffset
+        })
+    }
+
+    static fadeOutBackgroundWaves () {
+        GLOBALS.waves.forEach((wave) => {
+            wave.phaseOut = true
+        })
+    }
+
+    static addCanvasListener () {
+        document.body.addEventListener('click', (e) => {
+            document.getElementById('empty-state-text').classList.add('hide')
+            const coordinates = this.getMousePos(e)
+            GLOBALS.waves.push(WaveGenerator.createRandomWave(coordinates))
+        })
+    }
+
+    static getMousePos (evt) {
+        return {
+            x: evt.pageX - window.pageXOffset,
+            y: evt.pageY - window.pageYOffset,
+        }
+    }
 }
 
-function randomColor () {
-	const min = 0
-	return Math.round(min + Math.random() * (127 - min))
-}
+Page.setupNameDim()
+Page.setupBackgroundLinkListener()
+Page.setupDimensionsAndCanvas()
 
-let lastFrameTime = Date.now()
-startAnimation()
+WaveGenerator.createSpotifyWavesSet()
 
-function startAnimation () {
-	const framerate = 25
-	const msPerFrame = 1000 / framerate
-	const currentTime = Date.now()
-
-	if (currentTime - lastFrameTime > msPerFrame) {
-		window.requestAnimationFrame(processFrame)
-		lastFrameTime = currentTime
-	} else
-		window.requestAnimationFrame(startAnimation)
-}
-
-function processFrame () {
-	const ctx1 = canvases[0].getContext('2d')
-	const ctx2 = canvases[1].getContext('2d')
-	ctx1.fillStyle = 'rgba(0, 0, 0, 0.7)'
-	ctx1.fillRect(0, 0,  WIDTH, HEIGHT)
-	//ctx1.clearRect(0, 0, WIDTH, HEIGHT)
-	//ctx2.clearRect(0, 0, HEIGHT, WIDTH)
-	waves.forEach((wave) => {
-		wave.spreadStep()
-	})
-
-	if (selectedItemBackground && selectedItemBackground.defunct)
-		selectedItemBackground = null
-	selectedItemBackground && selectedItemBackground.spreadStep()
-	window.requestAnimationFrame(startAnimation)
-}
-
-document.body.addEventListener('click', function (e) {
-	if (e.target.tagName === 'CANVAS') {
-		const coordinates = getMousePos(e.target, e)
-		waves.push(createRandomWave(coordinates.x, coordinates.y))
-		//createRandomWave(coordinates.x, coordinates.y)
-	}
-})
-
-function getMousePos(canvas, evt) {
-	const rect = canvas.getBoundingClientRect()
-	return {
-		x: evt.clientX - rect.left,
-		y: evt.clientY - rect.top,
-	}
-}
-
-const addressEl = document.getElementsByTagName('address')[0]
-setTimeout(() => {
-	addressEl.classList.add('dimmed');
-}, 10000)
+const runner = new AnimationRunner(GLOBALS)
+runner.startAnimation()

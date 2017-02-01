@@ -2,27 +2,27 @@
 <html>
 	<head>
 		<title>Marcin Wolniewicz</title>
-		<link href="https://fonts.googleapis.com/css?family=Heebo:100" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Raleway:200,300" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#000000" />
 		<style>
+
 canvas {
-	position: absolute;
-	top: 0;
-	left: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
 	margin: 0;
 	padding: 0;
 }
 
 body {
-	background: #111122;
-	overflow: hidden;
+	background: black;
 	color: #bdbdbd;
-	font-family: 'Heebo', sans-serif;
+	font-family: 'Raleway', sans-serif;
 	font-size: 23px;
-	height: 100%;
-}
-
-html {
-	height: 100%;
+    padding: 0;
+    margin: 0;
 }
 
 section {
@@ -53,79 +53,77 @@ address.dimmed {
 address:hover {
 	opacity: 1;
 }
+
+main {
+    margin-top: 10vh;
+    text-align: center;
+    padding: 10px;
+    font-weight: 200;
+    position: relative;
+    z-index: 1;
+}
+
+body.hide-main-text main,
+body.hide-main-text address {
+    pointer-events: none;
+	transition: opacity linear 0.7s;
+    opacity: 0;
+    user-select: none;
+}
+
+#empty-state-text {
+    opacity: 0;
+	transition: opacity linear 1.5s;
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+}
+
+body.hide-main-text #empty-state-text {
+    opacity: 1;
+}
+
+body #empty-state-text.hide {
+    opacity: 0;
+    user-select: none;
+}
+
+p {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    font-weight: 300;
+}
+
 		</style>
 	</head>
 
 	<body>
 
-
-	<canvas id="background-1"></canvas>
-	<canvas id="background-2"></canvas>
-
 	<main>
 
-		<section id="education">
-            <!--<h2><a href="#education">Education</a></h2>-->
-			<h2>Education</h2>
-			<p>
-2003–2006 A-Levels (Gymnasieskola Certifikat) in Mathematics and Physics - grade A+ IVth High School, Toruñ
-2006–2008 Physics and Computer Science Nicolas Copernicus University, Toruñ
-2008–2013 Master of Arts in Sound Engineering Frederic Chopin University of Music, Warsaw
-Thesis: The influence of loudness level of background music on shopping behaviour
-— a field study
-			</p>
-		</section>
+    <h1>Hi Spotify!</h1>
 
-		<section id="experience">
-            <!--<h2><a href="#experience">Experience</a></h2>-->
-			<h2>Experience</h2>
-			<p>
-Incuna:
+    <h2>I would love to work with you!</h2>
 
-* Making issues
-* Pointing issues
-* Sprint planning
-* CI / deployment / build tools
-* JS development (AngularJS, React, d3, moment.js, lodash, babel)
-* MVC
-* Django / Python occasionally
-* SASS occasionally
-* code review for Obj-C ?
-* Writing tech specs
-* Consulting projects and ideas with designers, uxers, PMs, external companies
-* TDD
-* Clean code
+    <h3> Why?</h3>
 
+    <p>I believe that you are the future of the music industry and I would like to be part of that feature. You also have amazing developers that would allow me to reach the next level.</p>
 
-2004-2006 Webmaster - IVth High School Toruñ:
+    <h3> Why me? </h3>
 
-* Team of 4 - after school voluntary work
-* PHP / MySql
-* A custom built student / teacher student portal with about 500 users
-* A tagged photogallery with user uploading and editing
-* Schedule changes system used by the school director
+    <p>I learn really fast and I love being challenged. When I care for something I can work fast and give all the best I have. And apart from that, I am a musician and a sound engineer, so I know things about DSP, waves theory, acoustics, psychoacoustics. Math is also something I've always enjoyed and know some advanced math topics, like logarithms and calculus. I also feel strong about solving computer science problems with graphs and dynamic programming. And I am assionate about TDD and Clean Code.</p>
 
-* Flash
+    <h3>What's with the background?</h3>
 
-2015-now
-
-* d3 data viz
-* Instytucje (en)
-* Water
-			</p>
-		</section>
-
-		<section id="projects">
-			<h2>Projects</h2>
-		</section>
-
-		<section id="music">
-			<h2>Music</h2>
-		</section>
-
+    <p>The background is interactive! You can click on it to generate more pulsing circles. You can also go to a <a id="show-background-link" href="">textless version</a> with sound</p>
 	</main>
 
-	<address>Marcin Wolniewicz</address>
+    <p id="empty-state-text">Turn up your speakers and click or tap on the background to create a sound wave.</p>
+
+    <canvas id="background"></canvas>
+
+    <!--<address>Marcin Wolniewicz</address>-->
 
 	<script src="script.js"></script>
 
