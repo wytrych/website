@@ -97,7 +97,8 @@ class WaveComponent {
 
 	paint () {
 		GLOBALS.ctx.beginPath()
-		GLOBALS.ctx.arc(this.x, this.y + this.offset, this.radius, 0, 2 * Math.PI)
+		//GLOBALS.ctx.arc(this.x, this.y + this.offset, this.radius, 0, 2 * Math.PI)
+		GLOBALS.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
 
 		const R = this.red
 		const G = this.green
@@ -260,6 +261,8 @@ class AnimationRunner {
 class Page {
 
     static setupDimensionsAndCanvas () {
+        GLOBALS.canvas.height = 0
+
         GLOBALS.height = this.getHeight()
         GLOBALS.width = document.body.clientWidth
 
@@ -346,4 +349,9 @@ window.onload = function () {
 
     const runner = new AnimationRunner(GLOBALS)
     runner.startAnimation()
+
+    document.getElementsByTagName('main')[0].addEventListener('transitionend', function () {
+        this.style.display = 'none'
+        Page.setupDimensionsAndCanvas()
+    })
 }
