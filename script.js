@@ -50,6 +50,10 @@ class Wave {
         else
             this.waves[i] = new WaveComponent(this.waveSettings)
     }
+
+    repositionHeight (amount) {
+        this.waves.forEach((wave) => wave.repositionHeight(amount))
+    }
 }
 
 class WaveComponent {
@@ -118,11 +122,15 @@ class WaveComponent {
 		return (Math.sin(2 * Math.PI * howFarInPeriod) + 1) / modifier
 	}
 
+    repositionHeight (amount) {
+        this.y += amount
+    }
+
 }
 
 class AudioSignal {
     constructor ({x, y}) {
-        this.MIN_FREQ = 20
+        this.MIN_FREQ = 50
         this.MAX_FREQ = 15000
         this.GAIN_MODIFIER = -0.0005
         const maxMultiplier = Math.log2(this.MAX_FREQ / this.MIN_FREQ)
@@ -202,13 +210,18 @@ class WaveGenerator {
 
     static generateRandomColor () {
         let color
+        let i = 0
+        const iterationSafeguardLimit = 100000
         do {
             color = {
                 red: this.randomColor(),
                 green: this.randomColor(),
                 blue: this.randomColor(),
             }
-        } while (color.red + color.green + color.blue < 160)
+            i++
+        } while (i < iterationSafeguardLimit && color.red + color.green + color.blue < 127)
+
+        console.log(i);
 
         return color
     }
@@ -262,6 +275,7 @@ class Page {
 
     static setupDimensionsAndCanvas () {
         GLOBALS.canvas.height = 0
+        GLOBALS.canvas.width = 0
 
         GLOBALS.height = this.getHeight()
         GLOBALS.width = document.body.clientWidth
@@ -291,7 +305,6 @@ class Page {
             document.body.classList.add('hide-main-text')
             this.fadeOutBackgroundWaves()
             this.addCanvasListener()
-            window.addEventListener('resize', this.setupDimensionsAndCanvas.bind(this))
             GLOBALS.offset = window.pageYOffset
         })
     }
@@ -326,21 +339,28 @@ window.onload = function () {
         height: 0,
         width: 0,
         canvas: document.getElementById('background'),
-        audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
+        audioCtx: new (AudioContext || webkitAudioContext)(),
         waves: [],
     }
 
     GLOBALS.ctx = GLOBALS.canvas.getContext('2d')
 
     GLOBALS.masterGain = GLOBALS.audioCtx.createGain()
-    GLOBALS.masterGain.gain.value = 80
+    GLOBALS.masterGain.gain.value = 250
     GLOBALS.masterGain.connect(GLOBALS.audioCtx.destination)
+
+    GLOBALS.filter2 = GLOBALS.audioCtx.createBiquadFilter()
+    GLOBALS.filter2.type = 'highshelf'
+    GLOBALS.filter2.frequency.value = 700
+    GLOBALS.filter2.Q.value = 0.001
+    GLOBALS.filter2.gain.value = -10
+    GLOBALS.filter2.connect(GLOBALS.masterGain)
 
     GLOBALS.filter = GLOBALS.audioCtx.createBiquadFilter()
     GLOBALS.filter.type = 'highshelf'
     GLOBALS.filter.frequency.value = 7000
-    GLOBALS.filter.gain.value = -50
-    GLOBALS.filter.connect(GLOBALS.masterGain)
+    GLOBALS.filter.gain.value = -30
+    GLOBALS.filter.connect(GLOBALS.filter2)
 
     Page.setupBackgroundLinkListener()
     Page.setupDimensionsAndCanvas()
@@ -350,8 +370,11 @@ window.onload = function () {
     const runner = new AnimationRunner(GLOBALS)
     runner.startAnimation()
 
+    window.addEventListener('resize', () => Page.setupDimensionsAndCanvas())
+
     document.getElementsByTagName('main')[0].addEventListener('transitionend', function () {
         this.style.display = 'none'
+        GLOBALS.waves.forEach((wave) => wave.repositionHeight(-window.pageYOffset))
         Page.setupDimensionsAndCanvas()
     })
 }
