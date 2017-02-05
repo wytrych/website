@@ -83,3 +83,7 @@ a {
 .links h4 {
     margin-bottom: 0;
 }
+
+.links p {
+    margin-bottom: 0.3em;
+}
