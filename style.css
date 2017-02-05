@@ -17,9 +17,9 @@ body {
 }
 
 main {
-    margin-top: 10vh;
+    margin-top: 20vh;
     text-align: center;
-    padding: 10px;
+    padding-bottom: 40px;
     font-weight: 200;
     position: relative;
     z-index: 1;
@@ -45,11 +45,15 @@ body.hide-main-text main {
 	transition: opacity linear 1.5s;
     transition-delay: 0.7s;
     position: absolute;
-    top: 42%;
+    top: 38%;
     left: 0;
     width: 100%;
     z-index: 2;
     pointer-events: none;
+}
+
+#empty-state-text p {
+    padding: 0 15px;
 }
 
 body.hide-main-text #empty-state-text {
