@@ -1,5 +1,6 @@
 class Wave {
-	constructor (waveSettings) {
+	constructor (waveSettings, ctx, ENV) {
+        this.ctx = ctx
         this.GAP_MULTIPLIER = 40
 
 		this.numOfWaves = 8
@@ -8,7 +9,7 @@ class Wave {
 		this.waveSettings = waveSettings
 
         if (!waveSettings.isSilent)
-            this.signal = new AudioSignal(waveSettings)
+            this.signal = new AudioSignal(waveSettings, ENV)
 
         this.phaseOut = false
         this.defunct = false
@@ -22,7 +23,7 @@ class Wave {
 		const gap = Math.round((i / this.numOfWaves) * this.waveSettings.duration) * this.GAP_MULTIPLIER
 		setTimeout(() => {
             if (!this.phaseOut)
-                this.waves[i] = new WaveComponent(this.waveSettings)
+                this.waves[i] = new WaveComponent(this.waveSettings, this.ctx)
 		}, gap)
 	}
 
@@ -48,7 +49,7 @@ class Wave {
         if (this.phaseOut)
             this.waves[i] = null
         else
-            this.waves[i] = new WaveComponent(this.waveSettings)
+            this.waves[i] = new WaveComponent(this.waveSettings, this.ctx)
     }
 
     repositionHeight (amount) {
@@ -58,7 +59,8 @@ class Wave {
 
 class WaveComponent {
 
-	constructor ({speed, alphaStep, red, green, blue, duration, x, y}) {
+	constructor ({speed, alphaStep, red, green, blue, duration, x, y}, ctx) {
+        this.ctx = ctx
 		this.speed = speed
 
 		this.red = red
@@ -74,7 +76,6 @@ class WaveComponent {
 
 		this.x = x
 		this.y = y
-        this.offset = GLOBALS.offset
 
 		this.defunct = false
         this.DEFUNCT_LIMIT = 0.0001
@@ -100,9 +101,8 @@ class WaveComponent {
 	}
 
 	paint () {
-		GLOBALS.ctx.beginPath()
-		//GLOBALS.ctx.arc(this.x, this.y + this.offset, this.radius, 0, 2 * Math.PI)
-		GLOBALS.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+		this.ctx.beginPath()
+		this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
 
 		const R = this.red
 		const G = this.green
@@ -110,9 +110,9 @@ class WaveComponent {
 		const A = this.alpha * this.waveFunction(this.frameCount)
 
         this.currentAlpha = A * this.radius * this.RADIUS_MODIFIER
-		GLOBALS.ctx.fillStyle =  `rgba(${R}, ${G}, ${B}, ${A})`
-		GLOBALS.ctx.fill()
-		GLOBALS.ctx.closePath()
+		this.ctx.fillStyle =  `rgba(${R}, ${G}, ${B}, ${A})`
+		this.ctx.fill()
+		this.ctx.closePath()
 	}
 
 	waveFunction (position) {
@@ -129,7 +129,7 @@ class WaveComponent {
 }
 
 class AudioSignal {
-    constructor ({x, y}) {
+    constructor ({x, y}, ENV) {
         this.MIN_FREQ = 50
         this.MAX_FREQ = 15000
         this.GAIN_MODIFIER = -0.0005
@@ -137,25 +137,25 @@ class AudioSignal {
 
         const position = (window.innerHeight - y) / window.innerHeight
 
-        const pan = 2 * ((GLOBALS.width - x) / GLOBALS.width) - 1
+        const pan = 2 * ((ENV.width - x) / ENV.width) - 1
 
-        this.gainNode = GLOBALS.audioCtx.createGain()
+        this.gainNode = ENV.audioCtx.createGain()
         this.gainNode.gain.value = 0
 
-        this.oscillator = GLOBALS.audioCtx.createOscillator()
+        this.oscillator = ENV.audioCtx.createOscillator()
         this.oscillator.type = 'sine'
         this.freq = this.MIN_FREQ * Math.pow(2, position * maxMultiplier)
         this.oscillator.frequency.value = this.freq
         this.oscillator.connect(this.gainNode)
 
-        if (GLOBALS.audioCtx.createStereoPanner) {
-            this.panner = GLOBALS.audioCtx.createStereoPanner()
+        if (ENV.audioCtx.createStereoPanner) {
+            this.panner = ENV.audioCtx.createStereoPanner()
             this.panner.pan.value = -pan
             this.gainNode.connect(this.panner)
 
-            this.panner.connect(GLOBALS.filter)
+            this.panner.connect(ENV.filter)
         } else
-            this.gainNode.connect(GLOBALS.filter)
+            this.gainNode.connect(ENV.filter)
 
         this.oscillator.start()
     }
@@ -168,40 +168,40 @@ class AudioSignal {
 
 class WaveGenerator {
 
-    static createSpotifyWavesSet () {
+    static createSpotifyWavesSet (ENV) {
         const spotifyColor = {red: 30, green: 215, blue: 96}
-        GLOBALS.waves.push(this.createRandomWave({
-            x: GLOBALS.width,
-            y: GLOBALS.height / 3,
+        ENV.waves.push(this.createRandomWave({
+            x: ENV.width,
+            y: ENV.height / 3,
             color: spotifyColor,
             speed: 1,
-            alphaStep: 1/300,
+            alphaStep: 1 / 300,
             isSilent: true,
-        }))
+        }, ENV))
 
-        GLOBALS.waves.push(this.createRandomWave({
+        ENV.waves.push(this.createRandomWave({
             x: 30,
-            y: GLOBALS.height - 40,
+            y: ENV.height - 40,
             color: spotifyColor,
             speed: 1.2,
-            alphaStep: 1/400,
+            alphaStep: 1 / 400,
             isSilent: true,
-        }))
+        }, ENV))
     }
 
-    static createRandomWave ({x, y, color, speed, alphaStep, isSilent}) {
+    static createRandomWave ({x, y, color, speed, alphaStep, isSilent}, ENV) {
         const finalColor = color || this.generateRandomColor()
 
         const waveSettings = Object.assign({}, {
             speed: this.isDef(speed) ? speed : (Math.random() * 0.8 + 0.2),
             alphaStep: this.isDef(alphaStep) ? alphaStep : (Math.random() * 0.5 + 0.5) / 200,
             duration: 400 + Math.random() * 150,
-            x: this.isDef(x) ? x : Math.round(Math.random() * GLOBALS.width),
-            y: this.isDef(y) ? y : Math.round(Math.random() * GLOBALS.height),
+            x: this.isDef(x) ? x : Math.round(Math.random() * ENV.width),
+            y: this.isDef(y) ? y : Math.round(Math.random() * ENV.height),
             isSilent,
         }, finalColor)
 
-        return new Wave(waveSettings)
+        return new Wave(waveSettings, ENV.ctx, ENV)
     }
 
     static isDef (value) {
@@ -221,8 +221,6 @@ class WaveGenerator {
             i++
         } while (i < iterationSafeguardLimit && color.red + color.green + color.blue < 127)
 
-        console.log(i);
-
         return color
     }
 
@@ -234,9 +232,9 @@ class WaveGenerator {
 }
 
 class AnimationRunner {
-    constructor (GLOBALS) {
+    constructor (ENV) {
         this.lastFrameTime = Date.now()
-        this.GLOBALS = GLOBALS
+        this.ENV = ENV
 
         const framerate = 25
         this.msPerFrame = 1000 / framerate
@@ -258,13 +256,13 @@ class AnimationRunner {
 
     drawFrame () {
         const alphaFactor = 0.7
-        this.GLOBALS.ctx.fillStyle = `rgba(0, 0, 0, ${alphaFactor})`
-        this.GLOBALS.ctx.fillRect(0, 0,  this.GLOBALS.width, this.GLOBALS.height)
-        this.GLOBALS.waves.forEach((wave) => {
+        this.ENV.ctx.fillStyle = `rgba(0, 0, 0, ${alphaFactor})`
+        this.ENV.ctx.fillRect(0, 0,  this.ENV.width, this.ENV.height)
+        this.ENV.waves.forEach((wave) => {
             wave.spreadStep()
         })
 
-        this.GLOBALS.waves = this.GLOBALS.waves.filter((wave) => !wave.defunct)
+        this.ENV.waves = this.ENV.waves.filter((wave) => !wave.defunct)
 
         window.requestAnimationFrame(this.processFrame.bind(this))
     }
@@ -273,15 +271,15 @@ class AnimationRunner {
 
 class Page {
 
-    static setupDimensionsAndCanvas () {
-        GLOBALS.canvas.height = 0
-        GLOBALS.canvas.width = 0
+    static setupDimensionsAndCanvas (ENV) {
+        ENV.canvas.height = 0
+        ENV.canvas.width = 0
 
-        GLOBALS.height = this.getHeight()
-        GLOBALS.width = document.body.clientWidth
+        ENV.height = this.getHeight()
+        ENV.width = document.body.clientWidth
 
-        GLOBALS.canvas.width = GLOBALS.width
-        GLOBALS.canvas.height = GLOBALS.height
+        ENV.canvas.width = ENV.width
+        ENV.canvas.height = ENV.height
     }
 
     static getHeight () {
@@ -297,29 +295,28 @@ class Page {
         )
     }
 
-    static setupBackgroundLinkListener () {
+    static setupBackgroundLinkListener (waves, ENV) {
         const backgroundLink = document.getElementById('show-background-link')
         backgroundLink.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
             document.body.classList.add('hide-main-text')
-            this.fadeOutBackgroundWaves()
-            this.addCanvasListener()
-            GLOBALS.offset = window.pageYOffset
+            this.fadeOutBackgroundWaves(waves)
+            this.addCanvasListener(ENV)
         })
     }
 
-    static fadeOutBackgroundWaves () {
-        GLOBALS.waves.forEach((wave) => {
+    static fadeOutBackgroundWaves (waves) {
+        waves.forEach((wave) => {
             wave.phaseOut = true
         })
     }
 
-    static addCanvasListener () {
+    static addCanvasListener (ENV) {
         document.body.addEventListener('click', (e) => {
             document.getElementById('empty-state-text').classList.add('hide')
             const coordinates = this.getMousePos(e)
-            GLOBALS.waves.push(WaveGenerator.createRandomWave(coordinates))
+            ENV.waves.push(WaveGenerator.createRandomWave(coordinates, ENV))
         })
     }
 
@@ -331,50 +328,84 @@ class Page {
     }
 }
 
-var GLOBALS = {}
-
-window.onload = function () {
-    GLOBALS = {
-        offset: 0,
-        height: 0,
-        width: 0,
-        canvas: document.getElementById('background'),
-        audioCtx: new (AudioContext || webkitAudioContext)(),
-        waves: [],
+class AudioInit {
+    static setupAudio (ENV) {
+        this.setupMasterGain(ENV)
+        this.setupBassBoostFilter(ENV)
+        this.setupHighDampFilter(ENV)
     }
 
-    GLOBALS.ctx = GLOBALS.canvas.getContext('2d')
+    static setupMasterGain (ENV) {
+        ENV.masterGain = ENV.audioCtx.createGain()
+        ENV.masterGain.gain.value = 250
+        ENV.masterGain.connect(ENV.audioCtx.destination)
+    }
 
-    GLOBALS.masterGain = GLOBALS.audioCtx.createGain()
-    GLOBALS.masterGain.gain.value = 250
-    GLOBALS.masterGain.connect(GLOBALS.audioCtx.destination)
+    static setupBassBoostFilter (ENV) {
+        ENV.filter2 = ENV.audioCtx.createBiquadFilter()
+        ENV.filter2.type = 'highshelf'
+        ENV.filter2.frequency.value = 700
+        ENV.filter2.Q.value = 0.001
+        ENV.filter2.gain.value = -10
+        ENV.filter2.connect(ENV.masterGain)
+    }
 
-    GLOBALS.filter2 = GLOBALS.audioCtx.createBiquadFilter()
-    GLOBALS.filter2.type = 'highshelf'
-    GLOBALS.filter2.frequency.value = 700
-    GLOBALS.filter2.Q.value = 0.001
-    GLOBALS.filter2.gain.value = -10
-    GLOBALS.filter2.connect(GLOBALS.masterGain)
-
-    GLOBALS.filter = GLOBALS.audioCtx.createBiquadFilter()
-    GLOBALS.filter.type = 'highshelf'
-    GLOBALS.filter.frequency.value = 7000
-    GLOBALS.filter.gain.value = -30
-    GLOBALS.filter.connect(GLOBALS.filter2)
-
-    Page.setupBackgroundLinkListener()
-    Page.setupDimensionsAndCanvas()
-
-    WaveGenerator.createSpotifyWavesSet()
-
-    const runner = new AnimationRunner(GLOBALS)
-    runner.startAnimation()
-
-    window.addEventListener('resize', () => Page.setupDimensionsAndCanvas())
-
-    document.getElementsByTagName('main')[0].addEventListener('transitionend', function () {
-        this.style.display = 'none'
-        GLOBALS.waves.forEach((wave) => wave.repositionHeight(-window.pageYOffset))
-        Page.setupDimensionsAndCanvas()
-    })
+    static setupHighDampFilter(ENV) {
+        ENV.filter = ENV.audioCtx.createBiquadFilter()
+        ENV.filter.type = 'highshelf'
+        ENV.filter.frequency.value = 7000
+        ENV.filter.gain.value = -30
+        ENV.filter.connect(ENV.filter2)
+    }
 }
+
+class Main {
+    static init () {
+        const ENV = this.initEnvironment()
+
+        AudioInit.setupAudio(ENV)
+        Page.setupBackgroundLinkListener(ENV.waves, ENV)
+        Page.setupDimensionsAndCanvas(ENV)
+
+        WaveGenerator.createSpotifyWavesSet(ENV)
+
+        const runner = new AnimationRunner(ENV)
+        runner.startAnimation()
+
+        this.addListeners(ENV)
+    }
+
+    static initEnvironment () {
+        const ENV = {
+            height: 0,
+            width: 0,
+            canvas: document.getElementById('background'),
+            audioCtx: new (AudioContext || webkitAudioContext)(),
+            waves: [],
+        }
+
+        ENV.ctx = ENV.canvas.getContext('2d')
+
+        return ENV
+    }
+
+    static addListeners (ENV) {
+        window.addEventListener('resize', () => Page.setupDimensionsAndCanvas(ENV))
+
+        const mainElement = document.getElementsByTagName('main')[0]
+        mainElement.addEventListener('webkitTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('mozTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('oTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('msTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('transitionend', hideMainElementAndReadjustCanvas)
+
+        function hideMainElementAndReadjustCanvas () {
+            this.style.display = 'none'
+            ENV.waves.forEach((wave) => wave.repositionHeight(-window.pageYOffset))
+            Page.setupDimensionsAndCanvas(ENV)
+        }
+    }
+
+}
+
+window.onload = Main.init.bind(Main)
