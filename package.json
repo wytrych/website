@@ -1,0 +1,33 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "description": "Personal website",
+  "main": "index.html",
+  "dependencies": {
+    "babel-cli": "6.22.2",
+    "babel": "6.5.2",
+    "babel-preset-es2015": "6.22.0",
+    "uglify-js": "2.7.5",
+    "uglify": "0.1.5",
+    "uglifyjs2": "0.0.1"
+  },
+  "devDependencies": {
+    "babel-plugin-external-helpers": "6.22.0",
+    "babel-preset-es2015": "6.22.0",
+    "rollup": "0.41.4",
+    "rollup-plugin-babel": "2.7.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wytrych/website.git"
+  },
+  "author": "Marcin Wolniewicz",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/wytrych/website/issues"
+  },
+  "homepage": "https://github.com/wytrych/website#readme"
+}
