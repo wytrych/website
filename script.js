@@ -40,7 +40,7 @@ class Wave {
         if (this.signal)
             this.signal.changeGain(newGain)
 
-        this.waves = this.waves.filter((el) => el !== null)
+        this.waves = this.waves.filter((wave) => wave !== null)
         if (this.phaseOut && this.waves.length === 0)
             this.defunct = true
 	}
@@ -130,38 +130,45 @@ class WaveComponent {
 
 class AudioSignal {
     constructor ({x, y}, ENV) {
-        this.MIN_FREQ = 50
-        this.MAX_FREQ = 15000
-        this.GAIN_MODIFIER = -0.0005
-        const maxMultiplier = Math.log2(this.MAX_FREQ / this.MIN_FREQ)
-
-        const position = (window.innerHeight - y) / window.innerHeight
-
-        const pan = 2 * ((ENV.width - x) / ENV.width) - 1
+        this.position = (ENV.height - y) / ENV.height
+        this.pan = -(2 * ((ENV.width - x) / ENV.width) - 1)
+        this.ENV = ENV
 
         this.gainNode = ENV.audioCtx.createGain()
         this.gainNode.gain.value = 0
 
-        this.oscillator = ENV.audioCtx.createOscillator()
-        this.oscillator.type = 'sine'
-        this.freq = this.MIN_FREQ * Math.pow(2, position * maxMultiplier)
-        this.oscillator.frequency.value = this.freq
-        this.oscillator.connect(this.gainNode)
+        this.createOscillator()
 
-        if (ENV.audioCtx.createStereoPanner) {
-            this.panner = ENV.audioCtx.createStereoPanner()
-            this.panner.pan.value = -pan
-            this.gainNode.connect(this.panner)
-
-            this.panner.connect(ENV.filter)
-        } else
+        if (ENV.audioCtx.createStereoPanner)
+            this.createAndConnectPanner()
+        else
             this.gainNode.connect(ENV.filter)
 
         this.oscillator.start()
     }
 
+    createOscillator () {
+        const MIN_FREQ = 50
+        const MAX_FREQ = 15000
+        const multiplier = Math.log2(MAX_FREQ / MIN_FREQ)
+
+        this.oscillator = this.ENV.audioCtx.createOscillator()
+        this.oscillator.type = 'sine'
+        this.freq = MIN_FREQ * Math.pow(2, this.position * multiplier)
+        this.oscillator.frequency.value = this.freq
+        this.oscillator.connect(this.gainNode)
+    }
+
+    createAndConnectPanner () {
+        this.panner = this.ENV.audioCtx.createStereoPanner()
+        this.panner.pan.value = this.pan
+        this.gainNode.connect(this.panner)
+        this.panner.connect(this.ENV.filter)
+    }
+
     changeGain (newValue) {
-        this.gainNode.gain.value = this.GAIN_MODIFIER * newValue
+        const GAIN_MODIFIER = -0.0005
+        this.gainNode.gain.value = GAIN_MODIFIER * newValue
     }
 
 }
@@ -295,13 +302,34 @@ class Page {
         )
     }
 
-    static setupBackgroundLinkListener (waves, ENV) {
+    static setupListeners (ENV) {
+        window.addEventListener('resize', () => this.setupDimensionsAndCanvas(ENV))
+        this.setupMainTransitionEndListener(ENV)
+        this.setupBackgroundLinkListener(ENV)
+    }
+
+    static setupMainTransitionEndListener (ENV) {
+        const mainElement = document.getElementsByTagName('main')[0]
+        mainElement.addEventListener('webkitTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('mozTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('oTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('msTransitionEnd', hideMainElementAndReadjustCanvas)
+        mainElement.addEventListener('transitionend', hideMainElementAndReadjustCanvas)
+
+        function hideMainElementAndReadjustCanvas () {
+            this.style.display = 'none'
+            ENV.waves.forEach((wave) => wave.repositionHeight(-window.pageYOffset))
+            Page.setupDimensionsAndCanvas(ENV)
+        }
+    }
+
+    static setupBackgroundLinkListener (ENV) {
         const backgroundLink = document.getElementById('show-background-link')
         backgroundLink.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
             document.body.classList.add('hide-main-text')
-            this.fadeOutBackgroundWaves(waves)
+            this.fadeOutBackgroundWaves(ENV.waves)
             this.addCanvasListener(ENV)
         })
     }
@@ -364,15 +392,12 @@ class Main {
         const ENV = this.initEnvironment()
 
         AudioInit.setupAudio(ENV)
-        Page.setupBackgroundLinkListener(ENV.waves, ENV)
+        Page.setupListeners(ENV)
         Page.setupDimensionsAndCanvas(ENV)
-
         WaveGenerator.createSpotifyWavesSet(ENV)
 
         const runner = new AnimationRunner(ENV)
         runner.startAnimation()
-
-        this.addListeners(ENV)
     }
 
     static initEnvironment () {
@@ -388,24 +413,6 @@ class Main {
 
         return ENV
     }
-
-    static addListeners (ENV) {
-        window.addEventListener('resize', () => Page.setupDimensionsAndCanvas(ENV))
-
-        const mainElement = document.getElementsByTagName('main')[0]
-        mainElement.addEventListener('webkitTransitionEnd', hideMainElementAndReadjustCanvas)
-        mainElement.addEventListener('mozTransitionEnd', hideMainElementAndReadjustCanvas)
-        mainElement.addEventListener('oTransitionEnd', hideMainElementAndReadjustCanvas)
-        mainElement.addEventListener('msTransitionEnd', hideMainElementAndReadjustCanvas)
-        mainElement.addEventListener('transitionend', hideMainElementAndReadjustCanvas)
-
-        function hideMainElementAndReadjustCanvas () {
-            this.style.display = 'none'
-            ENV.waves.forEach((wave) => wave.repositionHeight(-window.pageYOffset))
-            Page.setupDimensionsAndCanvas(ENV)
-        }
-    }
-
 }
 
 window.onload = Main.init.bind(Main)
