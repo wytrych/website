@@ -1,2 +1,7 @@
 node_modules
 bundle.min.js
+.index.html.un~
+scripts/classes/.wave-generator.js.un~
+*.un~
+*.js~
+index.html~
