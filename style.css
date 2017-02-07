@@ -34,16 +34,13 @@ body.hide-main-text main {
     pointer-events: none;
 	transition: opacity linear 0.7s;
     opacity: 0;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
 }
 
 #empty-state-text {
     opacity: 0;
-	transition: opacity linear 1.5s;
-    transition-delay: 0.7s;
+	transition: opacity linear 1.3s;
+    transition-delay: 0.5s;
     position: absolute;
     top: 38%;
     left: 0;
@@ -56,6 +53,24 @@ body.hide-main-text main {
     padding: 0 15px;
 }
 
+p.no-canvas,
+p.no-audio {
+    display: none;
+}
+
+#empty-state-text.no-canvas p,
+#empty-state-text.no-audio p {
+    display: none;
+}
+
+#empty-state-text.no-canvas p.no-canvas {
+    display: inherit;
+}
+
+#empty-state-text.no-audio p.no-audio {
+    display: inherit;
+}
+
 body.hide-main-text #empty-state-text {
     opacity: 1;
 }
@@ -63,9 +78,6 @@ body.hide-main-text #empty-state-text {
 body #empty-state-text.hide {
     transition-delay: 0s;
     opacity: 0;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
 }
 

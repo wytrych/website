@@ -2,6 +2,24 @@ import { WaveGenerator } from './wave-generator'
 
 export class Page {
 
+    static checkRenderingSupport () {
+        return {
+            support: !!CanvasRenderingContext2D
+        }
+    }
+
+    static setNoSupportMessage () {
+        this.getEmptyStateText().classList.add('no-canvas')
+    }
+
+    static setNoAudioMessage () {
+        this.getEmptyStateText().classList.add('no-audio')
+    }
+
+    static getEmptyStateText () {
+        return document.getElementById('empty-state-text')
+    }
+
     static setupDimensionsAndCanvas (ENV) {
         ENV.canvas.height = 0
         ENV.canvas.width = 0
@@ -53,8 +71,11 @@ export class Page {
             e.preventDefault()
             e.stopPropagation()
             document.body.classList.add('hide-main-text')
-            this.fadeOutBackgroundWaves(ENV.waves)
-            this.addCanvasListener(ENV)
+
+            if (ENV) {
+                this.fadeOutBackgroundWaves(ENV.waves)
+                this.addCanvasListener(ENV)
+            }
         })
     }
 
@@ -66,7 +87,7 @@ export class Page {
 
     static addCanvasListener (ENV) {
         document.body.addEventListener('click', (e) => {
-            document.getElementById('empty-state-text').classList.add('hide')
+            this.getEmptyStateText().classList.add('hide')
             const coordinates = this.getMousePos(e)
             ENV.waves.push(WaveGenerator.createRandomWave(coordinates, ENV))
         })

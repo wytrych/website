@@ -5,35 +5,36 @@ import { AnimationRunner } from './classes/animation-runner'
 
 class Main {
     static init () {
-	const renderingContext = Page.checkRenderingSupport()
+        const renderingContext = Page.checkRenderingSupport()
 
-	if (!renderingContext.support) {
-		Page.setNoSupportMessage()
-		return
-	}
+        if (!renderingContext.support) {
+            Page.setNoSupportMessage()
+            Page.setupBackgroundLinkListener()
+            return
+        }
 
-	const audioContext = AudioInit.checkAudioSupport()
-	this.verifyAudioSupport(audioContext)
+        this.AudioContext = AudioInit.getAudioContext()
+        this.verifyAudioSupport()
 
-        const ENV = this.initEnvironment(audioContext)
+        const ENV = this.initEnvironment()
 
-	if (audioContext.support)
-		AudioInit.setupAudio(ENV)
-	    
-	Page.setupListeners(ENV)
-	Page.setupDimensionsAndCanvas(ENV)
-	WaveGenerator.createSpotifyWavesSet(ENV)
+        if (this.AudioContext)
+            AudioInit.setupAudio(ENV)
+            
+        Page.setupListeners(ENV)
+        Page.setupDimensionsAndCanvas(ENV)
+        WaveGenerator.createStartingWavesSet(ENV)
 
         const runner = new AnimationRunner(ENV)
         runner.startAnimation()
     }
 
-    static initEnvironment (audioContext) {
+    static initEnvironment () {
         const ENV = {
             height: 0,
             width: 0,
             canvas: document.getElementById('background'),
-            audioCtx: audioContext && new (AudioContext || webkitAudioContext)(),
+            audioCtx: this.AudioContext && new this.AudioContext(),
             waves: [],
         }
 
@@ -42,9 +43,9 @@ class Main {
         return ENV
     }
 
-    static verifyAudioSupport (audioContext) {
-        if (!audioContext.support)
-	    Page.setNoAudioMessage()
+    static verifyAudioSupport () {
+        if (!this.AudioContext)
+            Page.setNoAudioMessage()
     }
 }
 
