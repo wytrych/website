@@ -1,3 +1,5 @@
+import './polyfills/object-assign'
+
 import { AudioInit } from './classes/audio-init'
 import { Page } from './classes/page'
 import { WaveGenerator } from './classes/wave-generator'

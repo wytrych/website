@@ -4,7 +4,7 @@ export class Page {
 
     static checkRenderingSupport () {
         return {
-            support: !!CanvasRenderingContext2D
+            support: !!window.CanvasRenderingContext2D
         }
     }
 
