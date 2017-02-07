@@ -1,6 +1,5 @@
 export class AudioInit {
     static getAudioContext () {
-        return false
         return AudioContext || webkitAudioContext || false
     }
 
