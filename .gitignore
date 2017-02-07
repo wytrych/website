@@ -1,2 +1,6 @@
 node_modules
 bundle.min.js
+*.un~
+*.js~
+index.html~
+style-dist.css

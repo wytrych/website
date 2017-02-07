@@ -5,12 +5,25 @@ import { AnimationRunner } from './classes/animation-runner'
 
 class Main {
     static init () {
+        const renderingContext = Page.checkRenderingSupport()
+
+        if (!renderingContext.support) {
+            Page.setNoSupportMessage()
+            Page.setupBackgroundLinkListener()
+            return
+        }
+
+        this.AudioContext = AudioInit.getAudioContext()
+        this.verifyAudioSupport()
+
         const ENV = this.initEnvironment()
 
-        AudioInit.setupAudio(ENV)
+        if (this.AudioContext)
+            AudioInit.setupAudio(ENV)
+            
         Page.setupListeners(ENV)
         Page.setupDimensionsAndCanvas(ENV)
-        WaveGenerator.createSpotifyWavesSet(ENV)
+        WaveGenerator.createStartingWavesSet(ENV)
 
         const runner = new AnimationRunner(ENV)
         runner.startAnimation()
@@ -21,13 +34,18 @@ class Main {
             height: 0,
             width: 0,
             canvas: document.getElementById('background'),
-            audioCtx: new (AudioContext || webkitAudioContext)(),
+            audioCtx: this.AudioContext && new this.AudioContext(),
             waves: [],
         }
 
         ENV.ctx = ENV.canvas.getContext('2d')
 
         return ENV
+    }
+
+    static verifyAudioSupport () {
+        if (!this.AudioContext)
+            Page.setNoAudioMessage()
     }
 }
 

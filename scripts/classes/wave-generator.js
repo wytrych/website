@@ -2,12 +2,10 @@ import { Wave } from './wave'
 
 export class WaveGenerator {
 
-    static createSpotifyWavesSet (ENV) {
-        const spotifyColor = {red: 30, green: 215, blue: 96}
+    static createStartingWavesSet (ENV) {
         ENV.waves.push(this.createRandomWave({
             x: ENV.width,
             y: ENV.height / 3,
-            color: spotifyColor,
             speed: 1,
             alphaStep: 1 / 300,
             isSilent: true,
@@ -16,7 +14,6 @@ export class WaveGenerator {
         ENV.waves.push(this.createRandomWave({
             x: 30,
             y: ENV.height - 40,
-            color: spotifyColor,
             speed: 1.2,
             alphaStep: 1 / 400,
             isSilent: true,
@@ -32,7 +29,7 @@ export class WaveGenerator {
             duration: 400 + Math.random() * 150,
             x: this.isDef(x) ? x : Math.round(Math.random() * ENV.width),
             y: this.isDef(y) ? y : Math.round(Math.random() * ENV.height),
-            isSilent,
+            isSilent: this.isDef(isSilent) ? isSilent : false || !(ENV.audioCtx)
         }, finalColor)
 
         return new Wave(waveSettings, ENV.ctx, ENV)

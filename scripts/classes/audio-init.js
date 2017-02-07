@@ -1,4 +1,9 @@
 export class AudioInit {
+    static getAudioContext () {
+        return false
+        return AudioContext || webkitAudioContext || false
+    }
+
     static setupAudio (ENV) {
         this.setupMasterGain(ENV)
         this.setupBassBoostFilter(ENV)
